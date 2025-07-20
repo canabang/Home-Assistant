@@ -1,8 +1,6 @@
 <img width="1859" height="642" alt="image" src="https://github.com/user-attachments/assets/b20800b0-70e5-4d58-840e-16b924152fc6" />
 # 🐾 Pet Feeder - Home Assistant Integration
 
-Tralalala
-
 Une gestion complète pour gérer automatiquement un distributeur de nourriture pour animaux via Home Assistant et Zigbee2MQTT.
 
 Sachant que le poids de la portion et le poids total du réservoir peuvent varier suivant les croquettes utilisées. 
