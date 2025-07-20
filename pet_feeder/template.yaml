@@ -65,26 +65,6 @@
       stock_estime: "{{ states('input_number.pet_feeder_stock_estime') }}g"
       capacite_max: "{{ states('input_number.pet_feeder_max_capacity') }}g"
 
-  - name: "Jours restants nourriture"
-    unique_id: pet_feeder_days_remaining
-    unit_of_measurement: "jours"
-    state: >
-      {% if states('input_number.pet_feeder_stock_estime') not in ['unknown', 'unavailable'] and
-            states('input_number.pet_feeder_target_daily_weight') not in ['unknown', 'unavailable'] %}
-        {% set stock = states('input_number.pet_feeder_stock_estime') | float(0) %}
-        {% set consommation = states('input_number.pet_feeder_target_daily_weight') | float(85) %}
-        {% if consommation > 0 %}
-          {{ (stock / consommation) | round(0) }}
-        {% else %}
-          0
-        {% endif %}
-      {% else %}
-        unavailable
-      {% endif %}
-    attributes:
-      stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') }}g"
-      consommation_jour: "{{ states('input_number.pet_feeder_target_daily_weight') }}g (objectif configuré)"
-
   # Capteurs pour calculer automatiquement les portions
   - name: "Portions calculées matin"
     unique_id: pet_feeder_morning_portions
