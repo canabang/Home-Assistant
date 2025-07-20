@@ -88,3 +88,63 @@ actions:
         }}g → {{ nouveau_total_cumulatif }}g
       level: info
 mode: single
+
+alias: Pet Feeder - Mise à jour compteur consommation
+description: Ajoute le poids du dernier repas au compteur quotidien
+triggers:
+  - entity_id:
+      - sensor.poids_reel_distribue_aujourd_hui
+    trigger: state
+    from: null
+    to: null
+conditions:
+  - condition: template
+    value_template: |
+      {{ trigger.to_state.state | float(0) > 0 and 
+         trigger.from_state.state != trigger.to_state.state }}
+actions:
+  - target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: >
+        {% set current =
+        states('input_number.pet_feeder_daily_consumption_counter') | float(0)
+        %} {% set new_meal = trigger.to_state.state | float(0) %} {{ current +
+        new_meal }}
+    action: input_number.set_value
+
+alias: Pet Feeder - Détection rechargement et reset
+description: Détecte le rechargement (passage de <300g à >950g) et remet le compteur à zéro
+triggers:
+  - entity_id:
+      - input_number.pet_feeder_stock_estime
+    trigger: state
+    from: null
+    to: null
+conditions:
+  - condition: template
+    value_template: |
+      {{ trigger.from_state.state | float(0) < 300 and 
+         trigger.to_state.state | float(0) > 950 }}
+actions:
+  - target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_boolean.pet_feeder_stock_was_low
+    action: input_boolean.turn_off
+    data: {}
+
+alias: Pet Feeder - Suivi stock bas
+description: Marque quand le stock passe en dessous de 300g
+triggers:
+  - entity_id: input_number.pet_feeder_stock_estime
+    below: 300
+    trigger: numeric_state
+actions:
+  - target:
+      entity_id: input_boolean.pet_feeder_stock_was_low
+    action: input_boolean.turn_on
+    data: {}
