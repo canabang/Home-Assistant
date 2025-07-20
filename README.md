@@ -79,7 +79,7 @@ Tout va se passer dans HA, plus besoin de jongler entre HA pour les informations
 
 ### Configuration
 
-1. **Copier/Créer les fichiers de configuration** (ou rajouter le contenu à vos fichier existant) :
+1. **Copier/Créer les fichiers de configuration** (ou ajouter le contenu à vos fichier existant) :
    ```yaml
    # Dans configuration.yaml
    input_number: !include input_number.yaml
