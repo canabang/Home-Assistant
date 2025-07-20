@@ -55,7 +55,7 @@ Tout va se passer dans HA, plus besoin de jongler entre HA pour les informations
 ### Automatisations intelligentes
 
 1. **Recalcul automatique des portions**
-   - Déclencheur : Changement du poids unitaire (`number.pet_feeder_portion_weight`) ou objectif quotidien
+   - Déclencheur : Changement du poids unitaire (`number.pet_feeder_portion_weight`) ou objectif quotidien (`input_number.pet_feeder_target_daily_weight`)
    - Action : Recalcul des portions et mise à jour MQTT du planning de distribution
 
 2. **Mise à jour du stock**
