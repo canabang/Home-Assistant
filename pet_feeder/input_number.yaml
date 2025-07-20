@@ -1,1 +1,37 @@
+pet_feeder_total_distributed:
+  name: Total distribué (g)
+  min: 0
+  max: 100000
+  step: 1
+  unit_of_measurement: "g"
+  mode: box
+  icon: mdi:counter
 
+pet_feeder_max_capacity:
+  name: Capacité max du réservoir (g)
+  min: 0
+  max: 1500
+  step: 1
+  unit_of_measurement: "g"
+  mode: box
+  icon: mdi:barrel
+  initial: 1500
+
+pet_feeder_stock_estime:
+  name: Stock estimé actuel (g)
+  min: 0
+  max: 1000
+  step: 1
+  unit_of_measurement: "g"
+  mode: box
+  icon: mdi:warehouse
+
+pet_feeder_target_daily_weight:
+  name: "Objectif quotidien (g)"
+  min: 60
+  max: 120
+  step: 5
+  initial: 85
+  unit_of_measurement: "g"
+  mode: box
+  icon: mdi:target
