@@ -1,4 +1,4 @@
-#### pet-feeder, sensor template rajouter dans le fichier template.yaml ###
+#### pet-feeder ###
 - sensor:
   - name: "Dernier repas distribué (g)"
     unique_id: pet_feeder_real_weight_today
@@ -70,11 +70,11 @@
     unit_of_measurement: "jours"
     state: >
       {% if states('input_number.pet_feeder_stock_estime') not in ['unknown', 'unavailable'] and
-            states('sensor.pet_feeder_weight_per_day') not in ['unknown', 'unavailable'] %}
+            states('input_number.pet_feeder_target_daily_weight') not in ['unknown', 'unavailable'] %}
         {% set stock = states('input_number.pet_feeder_stock_estime') | float(0) %}
-        {% set consommation = states('sensor.pet_feeder_weight_per_day') | float(1) %}
+        {% set consommation = states('input_number.pet_feeder_target_daily_weight') | float(85) %}
         {% if consommation > 0 %}
-          {{ (stock / consommation) | round(1) }}
+          {{ (stock / consommation) | round(0) }}
         {% else %}
           0
         {% endif %}
@@ -83,7 +83,7 @@
       {% endif %}
     attributes:
       stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') }}g"
-      consommation_jour: "{{ states('sensor.pet_feeder_weight_per_day') }}g (depuis MQTT)"
+      consommation_jour: "{{ states('input_number.pet_feeder_target_daily_weight') }}g (objectif configuré)"
 
   # Capteurs pour calculer automatiquement les portions
   - name: "Portions calculées matin"
@@ -102,7 +102,7 @@
       poids_theorique: >
         {% set portions = states('sensor.portions_calculees_matin') | int(8) %}
         {% set poids = states('number.pet_feeder_portion_weight') | float(3) %}
-        {{ (portions * poids) | round(1) }}g
+        {{ (portions * poids) | round(0) }}g
       pourcentage: "28%"
 
   - name: "Portions calculées midi"
@@ -121,7 +121,7 @@
       poids_theorique: >
         {% set portions = states('sensor.portions_calculees_midi') | int(9) %}
         {% set poids = states('number.pet_feeder_portion_weight') | float(3) %}
-        {{ (portions * poids) | round(1) }}g
+        {{ (portions * poids) | round(0) }}g
       pourcentage: "32%"
 
   - name: "Portions calculées soir"
@@ -140,7 +140,7 @@
       poids_theorique: >
         {% set portions = states('sensor.portions_calculees_soir') | int(12) %}
         {% set poids = states('number.pet_feeder_portion_weight') | float(3) %}
-        {{ (portions * poids) | round(1) }}g
+        {{ (portions * poids) | round(0) }}g
       pourcentage: "40%"
 
   - name: "Total portions calculées"
@@ -155,11 +155,63 @@
       poids_total_theorique: >
         {% set total_portions = states('sensor.total_portions_calculees') | int(0) %}
         {% set poids = states('number.pet_feeder_portion_weight') | float(3) %}
-        {{ (total_portions * poids) | round(1) }}g
+        {{ (total_portions * poids) | round(0) }} g
       matin: >
-        {{ states('sensor.portions_calculees_matin') }}p ({{ state_attr('sensor.portions_calculees_matin', 'poids_theorique') }})
+        {% set portions_matin = states('sensor.portions_calculees_matin') | int(8) %}
+        {% set poids_portion = states('number.pet_feeder_portion_weight') | float(3) %}
+        {% set poids_matin = (portions_matin * poids_portion) | round(0) %}
+        {{ portions_matin }}p ({{ poids_matin }}g)
       midi: >
-        {{ states('sensor.portions_calculees_midi') }}p ({{ state_attr('sensor.portions_calculees_midi', 'poids_theorique') }})
+        {% set portions_midi = states('sensor.portions_calculees_midi') | int(9) %}
+        {% set poids_portion = states('number.pet_feeder_portion_weight') | float(3) %}
+        {% set poids_midi = (portions_midi * poids_portion) | round(0) %}
+        {{ portions_midi }}p ({{ poids_midi }}g)
       soir: >
-        {{ states('sensor.portions_calculees_soir') }}p ({{ state_attr('sensor.portions_calculees_soir', 'poids_theorique') }})
+        {% set portions_soir = states('sensor.portions_calculees_soir') | int(12) %}
+        {% set poids_portion = states('number.pet_feeder_portion_weight') | float(3) %}
+        {% set poids_soir = (portions_soir * poids_portion) | round(0) %}
+        {{ portions_soir }}p ({{ poids_soir }}g)
 
+  - name: "Consommation quotidienne moyenne"
+    unique_id: pet_feeder_daily_average_consumption
+    unit_of_measurement: "g"
+    state: >
+      {% set counter = states('input_number.pet_feeder_daily_consumption_counter') | float(0) %}
+      {% set days_since_refill = (as_timestamp(now()) - as_timestamp(states.input_number.pet_feeder_daily_consumption_counter.last_changed)) / 86400 %}
+      {% if days_since_refill >= 1 %}
+        {{ (counter / days_since_refill) | round(1) }}
+      {% else %}
+        {{ counter | round(0) }}
+      {% endif %}
+    attributes:
+      jours_depuis_reset: >
+        {{ ((as_timestamp(now()) - as_timestamp(states.input_number.pet_feeder_daily_consumption_counter.last_changed)) / 86400) | round(1) }}
+      consommation_totale: "{{ states('input_number.pet_feeder_daily_consumption_counter') }}g"
+      derniere_remise_zero: "{{ states.input_number.pet_feeder_daily_consumption_counter.last_changed.strftime('%d/%m/%Y %H:%M') if states.input_number.pet_feeder_daily_consumption_counter.last_changed else 'Inconnue' }}"
+
+  - name: "Jours restants nourriture"
+    unique_id: pet_feeder_days_remaining
+    unit_of_measurement: "jours"
+    state: >
+      {% if states('input_number.pet_feeder_stock_estime') not in ['unknown', 'unavailable'] and
+            states('sensor.consommation_quotidienne_moyenne') not in ['unknown', 'unavailable'] %}
+        {% set stock = states('input_number.pet_feeder_stock_estime') | float(0) %}
+        {% set consommation = states('sensor.consommation_quotidienne_moyenne') | float(0) %}
+        {% if consommation > 0 %}
+          {{ (stock / consommation) | round(1) }}
+        {% else %}
+          {% set target = states('input_number.pet_feeder_target_daily_weight') | float(85) %}
+          {{ (stock / target) | round(1) }}
+        {% endif %}
+      {% else %}
+        unavailable
+      {% endif %}
+    attributes:
+      stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') }}g"
+      consommation_moyenne: "{{ states('sensor.consommation_quotidienne_moyenne') }}g/jour"
+      methode: >
+        {% if states('sensor.consommation_quotidienne_moyenne') | float(0) > 0 %}
+          "Consommation réelle mesurée"
+        {% else %}
+          "Objectif théorique ({{ states('input_number.pet_feeder_target_daily_weight') }}g/jour)"
+        {% endif %}
