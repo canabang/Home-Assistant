@@ -60,7 +60,7 @@ Tout va se passer dans HA, plus besoin de jongler entre HA pour les informations
 
 2. **Mise à jour du stock**
    - Déclencheur : Nouveau repas distribué
-   - Actions : Décrément du stock, mise à jour des compteurs
+   - Actions : gère la baisse du stock, mise à jour des compteurs
 
 3. **Détection de rechargement**
    - Condition : Passage de <300g à >950g
@@ -79,7 +79,7 @@ Tout va se passer dans HA, plus besoin de jongler entre HA pour les informations
 
 ### Configuration
 
-1. **Copier les fichiers de configuration** :
+1. **Copier/Créer les fichiers de configuration** (ou rajouter le contenu à vos fichier existant) :
    ```yaml
    # Dans configuration.yaml
    input_number: !include input_number.yaml
