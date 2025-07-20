@@ -1,0 +1,3 @@
+pet_feeder_stock_was_low:
+  name: "Stock était bas (technique)"
+  icon: mdi:alert-circle
