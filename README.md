@@ -37,7 +37,7 @@ Tout va se passer dans HA, plus besoin de jongler entre HA pour les informations
 - `number.pet_feeder_portion_weight` : **Poids unitaire par portion (g)** - Paramètre clé pour tous les calculs
 
 #### Input Numbers
-- `pet_feeder_target_daily_weight` : Objectif quotidien (60-120g)
+- `pet_feeder_target_daily_weight` : Objectif quotidien (20-150g)
 - `pet_feeder_stock_estime` : Stock estimé actuel
 - `pet_feeder_max_capacity` : Capacité maximale du réservoir (variable selon croquettes)
 - `pet_feeder_daily_consumption_counter` : Compteur consommation quotidienne
