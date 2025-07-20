@@ -4,7 +4,7 @@
 Une intégration complète pour gérer automatiquement un distributeur de nourriture pour animaux via Home Assistant et Zigbee2MQTT.
 
 Sachant que le poids de la portion et le poids total du reservoir peuvent varier suivant les croquettes utilisées. 
-Tout va se passer dans HA, plus besoin de jongler entre ha pour les "info" et Z2M pour les réglages.
+Tout va se passer dans HA, plus besoin de jongler entre HA pour les "info" et Z2M pour les réglages.
 
 ## ✨ Fonctionnalités principales
 
@@ -16,7 +16,7 @@ Tout va se passer dans HA, plus besoin de jongler entre ha pour les "info" et Z2
 ### 📊 Suivi de la consommation
 - **Monitoring en temps réel** : Suivi du dernier repas distribué et du total quotidien
 - **Moyennes calculées** : Consommation moyenne basée sur l'historique réel
-- **Compteurs avancés** : Total cumulatif et consommation quotidienne
+- **Compteurs avancés** : Total cumulé et consommation quotidienne
 
 ### 📦 Gestion intelligente du stock
 - **Estimation automatique** : Calcul du stock restant basé sur la consommation
