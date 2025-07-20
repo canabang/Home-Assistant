@@ -1,0 +1,161 @@
+title: 🐾 Pet Feeder
+path: pet-feeder
+icon: mdi:food-drumstick
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.pourcentage_croquette_restant
+        name: Stock Restant
+        min: 0
+        max: 100
+        severity:
+          green: 50
+          yellow: 25
+          red: 10
+        needle: true
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.jours_restants_nourriture
+            name: Jours restants
+            show_state: true
+            show_graph: false
+        height: 80
+        font_size: 75
+        card_mod:
+          style: |
+            ha-card {
+              text-align: center;
+              {% if states('sensor.jours_restants_nourriture')|float < 3 %}
+                background: rgba(244,67,54,0.1);
+                border: 2px solid #f44336;
+              {% elif states('sensor.jours_restants_nourriture')|float < 7 %}
+                background: rgba(255,152,0,0.1);
+                border: 2px solid #ff9800;
+              {% endif %}
+            }
+  - type: entities
+    title: 📊 Consommation Aujourd'hui
+    entities:
+      - entity: sensor.poids_reel_distribue_aujourd_hui
+        name: Dernier repas
+        icon: mdi:bowl
+      - entity: input_number.pet_feeder_daily_consumption_counter
+        name: Total consommé aujourd'hui
+        icon: mdi:counter
+      - entity: sensor.consommation_quotidienne_moyenne
+        name: Moyenne quotidienne
+        icon: mdi:chart-line
+      - entity: input_number.pet_feeder_target_daily_weight
+        name: Objectif quotidien
+        icon: mdi:target
+  - type: entities
+    title: ⏰ Portions Programmées
+    entities:
+      - entity: sensor.portions_calculees_matin
+        name: 🌅 Matin (8h00)
+        secondary_info: >
+          {{ state_attr('sensor.portions_calculees_matin', 'poids_theorique') }}
+          - 
+
+          {{ state_attr('sensor.portions_calculees_matin', 'pourcentage') }}
+      - entity: sensor.portions_calculees_midi
+        name: ☀️ Midi (14h00)
+        secondary_info: >
+          {{ state_attr('sensor.portions_calculees_midi', 'poids_theorique') }}
+          - 
+
+          {{ state_attr('sensor.portions_calculees_midi', 'pourcentage') }}
+      - entity: sensor.portions_calculees_soir
+        name: 🌙 Soir (20h00)
+        secondary_info: >
+          {{ state_attr('sensor.portions_calculees_soir', 'poids_theorique') }}
+          - 
+
+          {{ state_attr('sensor.portions_calculees_soir', 'pourcentage') }}
+      - type: divider
+      - entity: sensor.total_portions_calculees
+        name: 📋 Total programmé
+        secondary_info: >
+          {{ state_attr('sensor.total_portions_calculees',
+          'poids_total_theorique') }}
+  - type: horizontal-stack
+    cards:
+      - type: entities
+        title: 📦 Gestion Stock
+        entities:
+          - entity: input_number.pet_feeder_stock_estime
+            name: Stock estimé
+            icon: mdi:warehouse
+          - entity: input_number.pet_feeder_max_capacity
+            name: Capacité max
+            icon: mdi:barrel
+          - entity: input_boolean.pet_feeder_stock_was_low
+            name: Stock était bas
+            icon: mdi:alert-circle
+          - entity: number.pet_feeder_portion_weight
+            name: Poids par portion
+            icon: mdi:scale
+  - type: conditional
+    conditions:
+      - entity: sensor.consommation_quotidienne_moyenne
+        state_not: "0"
+    card:
+      type: entities
+      title: 📈 Statistiques Avancées
+      entities:
+        - type: custom:multiple-entity-row
+          entity: sensor.consommation_quotidienne_moyenne
+          name: Analyse consommation
+          show_state: false
+          entities:
+            - entity: sensor.consommation_quotidienne_moyenne
+              name: Moyenne
+              unit: g/jour
+            - entity: input_number.pet_feeder_target_daily_weight
+              name: Objectif
+              unit: g/jour
+        - entity: input_number.pet_feeder_total_distributed
+          name: Total distribué (cumul)
+          icon: mdi:counter
+        - type: custom:bar-card
+          entity: sensor.pourcentage_croquette_restant
+          name: Niveau du réservoir
+          positions:
+            icon: "off"
+            name: inside
+          severity:
+            - color: "#f44336"
+              from: 0
+              to: 15
+            - color: "#ff9800"
+              from: 15
+              to: 30
+            - color: "#4caf50"
+              from: 30
+              to: 100
+  - type: entities
+    title: 🎛️ Contrôles
+    entities:
+      - type: call-service
+        name: 🔄 Forcer recalcul portions
+        service: homeassistant.update_entity
+        service_data:
+          entity_id: sensor.portions_calculees_matin
+        icon: mdi:calculator
+      - type: call-service
+        name: 🍽️ Distribution manuelle test
+        service: mqtt.publish
+        service_data:
+          topic: zigbee2mqtt02/Pet feeder/set
+          payload: "{\"feed\": \"\"}"
+        icon: mdi:play
+      - type: call-service
+        name: 📊 Reset compteur jour
+        service: input_number.set_value
+        service_data:
+          entity_id: input_number.pet_feeder_daily_consumption_counter
+          value: 0
+        icon: mdi:restore
+        confirmation:
+          text: Êtes-vous sûr de vouloir remettre le compteur à zéro ?
