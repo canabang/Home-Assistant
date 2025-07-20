@@ -76,10 +76,10 @@ Une intégration complète pour gérer automatiquement un distributeur de nourri
 1. **Copier les fichiers de configuration** :
    ```yaml
    # Dans configuration.yaml
-   input_number: !include pet_feeder/input_number.yaml
-   input_boolean: !include pet_feeder/input_boolean.yaml
-   template: !include pet_feeder/template.yaml
-   automation: !include pet_feeder/automations.yaml
+   input_number: !include input_number.yaml
+   input_boolean: !include input_boolean.yaml
+   template: !include template.yaml
+   automation: !include automations.yaml
    ```
 
 2. **Ajouter le dashboard** :
