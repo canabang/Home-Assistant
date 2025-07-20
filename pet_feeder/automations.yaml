@@ -1,0 +1,90 @@
+alias: Pet Feeder - Recalcul automatique des portions
+description: Recalcule et applique les portions quand le poids unitaire change
+triggers:
+  - entity_id:
+      - number.pet_feeder_portion_weight
+      - input_number.pet_feeder_target_daily_weight
+    trigger: state
+    for:
+      seconds: 3
+conditions:
+  - condition: template
+    value_template: |
+      {{ trigger.from_state is not none and 
+         trigger.to_state is not none and
+         trigger.to_state.state not in ['unknown', 'unavailable'] and
+         trigger.to_state.state | float(0) > 0 }}
+actions:
+  - delay:
+      seconds: 2
+  - variables:
+      portions_matin: "{{ states('sensor.portions_calculees_matin') | int(8) }}"
+      portions_midi: "{{ states('sensor.portions_calculees_midi') | int(9) }}"
+      portions_soir: "{{ states('sensor.portions_calculees_soir') | int(12) }}"
+      poids_portion: "{{ trigger.to_state.state | float(3) }}"
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt02/Pet feeder/set
+      payload: |
+        {
+          "schedule": [
+            {"days": "everyday", "hour": 8, "minute": 0, "size": {{ portions_matin }}},
+            {"days": "everyday", "hour": 14, "minute": 0, "size": {{ portions_midi }}},
+            {"days": "everyday", "hour": 20, "minute": 0, "size": {{ portions_soir }}}
+          ]
+        }
+  - action: system_log.write
+    data:
+      message: >
+        Pet Feeder: Portions recalculées pour {{ poids_portion }}g/portion.
+        Nouvelle répartition: Matin={{ portions_matin }}p, Midi={{ portions_midi
+        }}p, Soir={{ portions_soir }}p. Total théorique: {{ (portions_matin +
+        portions_midi + portions_soir) * poids_portion }}g/jour
+      level: info
+mode: single
+
+
+
+alias: Mise à jour du poids total distribué (cumulatif)
+description: >-
+  Met à jour le compteur cumulatif et le stock estimé quand un repas est
+  distribué
+triggers:
+  - entity_id:
+      - sensor.poids_reel_distribue_aujourd_hui
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {{ trigger.from_state is not none and trigger.to_state is not none and
+         trigger.to_state.state not in ['unknown', 'unavailable'] and
+         trigger.from_state.state not in ['unknown', 'unavailable'] and
+         trigger.to_state.state | float(0) > 0 }}
+actions:
+  - variables:
+      poids_distribue: |
+        {{ trigger.to_state.state | float(0) }}
+      stock_actuel: |
+        {{ states('input_number.pet_feeder_stock_estime') | float(0) }}
+      nouveau_stock: |
+        {{ [stock_actuel - poids_distribue, 0] | max | round(1) }}
+      total_cumulatif_actuel: |
+        {{ states('input_number.pet_feeder_total_distributed') | float(0) }}
+      nouveau_total_cumulatif: |
+        {{ (total_cumulatif_actuel + poids_distribue) | round(1) }}
+  - data:
+      entity_id: input_number.pet_feeder_stock_estime
+      value: "{{ nouveau_stock }}"
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.pet_feeder_total_distributed
+      value: "{{ nouveau_total_cumulatif }}"
+    action: input_number.set_value
+  - action: system_log.write
+    data:
+      message: >
+        Pet Feeder: {{ poids_distribue }}g distribués.  Stock: {{ stock_actuel
+        }}g → {{ nouveau_stock }}g.  Total cumulatif: {{ total_cumulatif_actuel
+        }}g → {{ nouveau_total_cumulatif }}g
+      level: info
+mode: single
