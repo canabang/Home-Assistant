@@ -2,6 +2,7 @@
 # 🐾 Pet Feeder - Home Assistant Integration
 
 Une intégration complète pour gérer automatiquement un distributeur de nourriture pour animaux via Home Assistant et Zigbee2MQTT.
+
 Sachant que le poids de la portion et le poids total du reservoir peuvent varier suivant les croquettes utilisées. 
 Tout va se passer dans HA, plus besoin de jongler entre ha pour les "info" et Z2M pour les réglages.
 
