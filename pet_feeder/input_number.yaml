@@ -20,7 +20,7 @@ pet_feeder_max_capacity:
 pet_feeder_stock_estime:
   name: Stock estimé actuel (g)
   min: 0
-  max: 1000
+  max: 1500
   step: 1
   unit_of_measurement: "g"
   mode: box
@@ -30,8 +30,17 @@ pet_feeder_target_daily_weight:
   name: "Objectif quotidien (g)"
   min: 60
   max: 120
-  step: 5
+  step: 1
   initial: 85
   unit_of_measurement: "g"
   mode: box
   icon: mdi:target
+
+pet_feeder_daily_consumption_counter:
+  name: "Compteur consommation quotidienne (g)"
+  min: 0
+  max: 1500
+  step: 1
+  unit_of_measurement: "g"
+  mode: box
+  icon: mdi:counter
