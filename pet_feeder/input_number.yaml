@@ -28,10 +28,10 @@ pet_feeder_stock_estime:
 
 pet_feeder_target_daily_weight:
   name: "Objectif quotidien (g)"
-  min: 60
+  min: 20
   max: 120
   step: 1
-  initial: 85
+  initial: 60
   unit_of_measurement: "g"
   mode: box
   icon: mdi:target
