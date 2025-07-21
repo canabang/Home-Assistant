@@ -177,3 +177,36 @@ actions:
         Quotidien: {{ compteur_quotidien_actuel }}g → {{ nouveau_compteur_quotidien }}g
       level: info
 mode: single
+
+alias: Pet Feeder - Initialisation manuelle remplissage
+description: Permet d'initialiser manuellement un nouveau cycle de suivi
+triggers:
+  - entity_id: input_boolean.pet_feeder_manual_refill_trigger
+    trigger: state
+    to: "on"
+actions:
+  - target:
+      entity_id: input_number.pet_feeder_cumulative_distributed_since_refill
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.pet_feeder_refill_date
+    data:
+      value: "{{ now().timestamp() }}"
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_boolean.pet_feeder_manual_refill_trigger
+    action: input_boolean.turn_off
+    data: {}
+  - action: system_log.write
+    data:
+      message: "Pet Feeder: Initialisation manuelle d'un nouveau cycle de suivi"
+      level: info
+mode: single
+
