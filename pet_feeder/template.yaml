@@ -200,3 +200,89 @@
         {% else %}
           "Objectif théorique ({{ states('input_number.pet_feeder_target_daily_weight') }}g/jour)"
         {% endif %}
+
+- name: "Consommation moyenne réelle"
+    unique_id: pet_feeder_real_daily_average
+    unit_of_measurement: "g/jour"
+    state: >
+      {% set cumul = states('input_number.pet_feeder_cumulative_distributed_since_refill') | float(0) %}
+      {% set timestamp_refill = states('input_number.pet_feeder_refill_date') | float(0) %}
+      
+      {% if timestamp_refill > 0 and cumul > 0 %}
+        {% set jours_ecoules = ((now().timestamp() - timestamp_refill) / 86400) | round(1) %}
+        {% if jours_ecoules >= 1 %}
+          {{ (cumul / jours_ecoules) | round(1) }}
+        {% else %}
+          {# Si moins d'un jour écoulé, extrapoler sur 24h #}
+          {% set heures_ecoulees = ((now().timestamp() - timestamp_refill) / 3600) | round(1) %}
+          {% if heures_ecoulees >= 2 %}
+            {{ (cumul * 24 / heures_ecoulees) | round(1) }}
+          {% else %}
+            {{ states('input_number.pet_feeder_target_daily_weight') | float(85) }}
+          {% endif %}
+        {% endif %}
+      {% else %}
+        {{ states('input_number.pet_feeder_target_daily_weight') | float(85) }}
+      {% endif %}
+    attributes:
+      cumul_depuis_refill: "{{ states('input_number.pet_feeder_cumulative_distributed_since_refill') }}g"
+      jours_ecoules: >
+        {% set timestamp_refill = states('input_number.pet_feeder_refill_date') | float(0) %}
+        {% if timestamp_refill > 0 %}
+          {{ ((now().timestamp() - timestamp_refill) / 86400) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+      date_refill: >
+        {% set timestamp_refill = states('input_number.pet_feeder_refill_date') | float(0) %}
+        {% if timestamp_refill > 0 %}
+          {{ timestamp_refill | timestamp_custom('%d/%m/%Y %H:%M') }}
+        {% else %}
+          "Non défini"
+        {% endif %}
+      methode: >
+        {% set timestamp_refill = states('input_number.pet_feeder_refill_date') | float(0) %}
+        {% set cumul = states('input_number.pet_feeder_cumulative_distributed_since_refill') | float(0) %}
+        {% if timestamp_refill > 0 and cumul > 0 %}
+          {% set jours_ecoules = ((now().timestamp() - timestamp_refill) / 86400) | round(1) %}
+          {% if jours_ecoules >= 1 %}
+            "Moyenne réelle sur {{ jours_ecoules }} jours"
+          {% else %}
+            "Extrapolation (moins de 24h de données)"
+          {% endif %}
+        {% else %}
+          "Objectif théorique (pas encore de données)"
+        {% endif %}
+
+  - name: "Jours restants nourriture (méthode cumulative)"
+    unique_id: pet_feeder_days_remaining_cumulative
+    unit_of_measurement: "jours"
+    state: >
+      {% set stock = states('input_number.pet_feeder_stock_estime') | float(0) %}
+      {% set moyenne_reelle = states('sensor.consommation_moyenne_reelle') | float(0) %}
+      
+      {% if stock > 0 and moyenne_reelle > 0 %}
+        {{ (stock / moyenne_reelle) | round(1) }}
+      {% else %}
+        0
+      {% endif %}
+    attributes:
+      stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') }}g"
+      consommation_moyenne: "{{ states('sensor.consommation_moyenne_reelle') }}g/jour"
+      precision: >
+        {% set cumul = states('input_number.pet_feeder_cumulative_distributed_since_refill') | float(0) %}
+        {% set timestamp_refill = states('input_number.pet_feeder_refill_date') | float(0) %}
+        {% if timestamp_refill > 0 and cumul > 0 %}
+          {% set jours_ecoules = ((now().timestamp() - timestamp_refill) / 86400) | round(1) %}
+          {% if jours_ecoules >= 7 %}
+            "Très précis ({{ jours_ecoules }} jours de données)"
+          {% elif jours_ecoules >= 3 %}
+            "Précis ({{ jours_ecoules }} jours de données)"
+          {% elif jours_ecoules >= 1 %}
+            "Assez précis ({{ jours_ecoules }} jours de données)"
+          {% else %}
+            "Estimation (extrapolation sur moins de 24h)"
+          {% endif %}
+        {% else %}
+          "Théorique (pas encore de données réelles)"
+        {% endif %}
