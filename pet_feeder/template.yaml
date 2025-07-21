@@ -156,19 +156,24 @@
     unique_id: pet_feeder_daily_average_consumption
     unit_of_measurement: "g"
     state: >
-      {% set counter = states('input_number.pet_feeder_daily_consumption_counter') | float(0) %}
-      {% set days_since_refill = (as_timestamp(now()) - as_timestamp(states.input_number.pet_feeder_daily_consumption_counter.last_changed)) / 86400 %}
-      {% if days_since_refill >= 1 %}
-        {{ (counter / days_since_refill) | round(1) }}
-      {% else %}
-        {{ counter | round(0) }}
-      {% endif %}
+      {% set today_consumption = states('input_number.pet_feeder_daily_consumption_counter') | float(0) %}
+      {{ today_consumption | round(1) }}
     attributes:
-      jours_depuis_reset: >
-        {{ ((as_timestamp(now()) - as_timestamp(states.input_number.pet_feeder_daily_consumption_counter.last_changed)) / 86400) | round(1) }}
-      consommation_totale: "{{ states('input_number.pet_feeder_daily_consumption_counter') }}g"
-      derniere_remise_zero: "{{ states.input_number.pet_feeder_daily_consumption_counter.last_changed.strftime('%d/%m/%Y %H:%M') if states.input_number.pet_feeder_daily_consumption_counter.last_changed else 'Inconnue' }}"
-
+      consommation_aujourd_hui: "{{ states('input_number.pet_feeder_daily_consumption_counter') }}g"
+      objectif_quotidien: "{{ states('input_number.pet_feeder_target_daily_weight') }}g"
+      ecart_objectif: >
+        {% set today = states('input_number.pet_feeder_daily_consumption_counter') | float(0) %}
+        {% set target = states('input_number.pet_feeder_target_daily_weight') | float(85) %}
+        {{ (today - target) | round(1) }}g
+      pourcentage_objectif: >
+        {% set today = states('input_number.pet_feeder_daily_consumption_counter') | float(0) %}
+        {% set target = states('input_number.pet_feeder_target_daily_weight') | float(85) %}
+        {% if target > 0 %}
+          {{ ((today / target) * 100) | round(1) }}%
+        {% else %}
+          0%
+        {% endif %}
+        
   - name: "Jours restants nourriture"
     unique_id: pet_feeder_days_remaining
     unit_of_measurement: "jours"
