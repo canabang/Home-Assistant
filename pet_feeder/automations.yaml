@@ -148,3 +148,20 @@ actions:
       entity_id: input_boolean.pet_feeder_stock_was_low
     action: input_boolean.turn_on
     data: {}
+alias: Pet Feeder - Reset quotidien compteur consommation
+description: Remet à zéro le compteur de consommation quotidienne chaque jour à minuit
+triggers:
+  - at: "00:00:00"
+    trigger: time
+conditions: []
+actions:
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: 0
+  - action: system_log.write
+    data:
+      message: "Pet Feeder: Reset automatique du compteur quotidien à minuit"
+      level: info
+mode: single
