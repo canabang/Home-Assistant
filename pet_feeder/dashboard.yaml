@@ -278,12 +278,4 @@ sections:
             icon: mdi:warehouse
             confirmation:
               text: Marquer le réservoir comme plein ?
-  - type: grid
-    cards: []
-  - type: grid
-    cards: []
-  - type: grid
-    cards: []
-  - type: grid
-    cards: []
 max_columns: 4
