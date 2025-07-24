@@ -104,21 +104,23 @@ description: >-
   distribution
 triggers:
   - entity_id:
-      - sensor.poids_reel_distribue_aujourd_hui
+      - sensor.pet_feeder_weight_per_day
     trigger: state
     from: null
     to: null
 conditions:
   - condition: template
     value_template: |
-      {{ trigger.from_state is not none and trigger.to_state is not none and
-         trigger.to_state.state not in ['unknown', 'unavailable'] and
+      {{ trigger.from_state is not none and 
+         trigger.to_state is not none and
          trigger.from_state.state not in ['unknown', 'unavailable'] and
+         trigger.to_state.state not in ['unknown', 'unavailable'] and
          trigger.to_state.state | float(0) > 0 and
-         trigger.from_state.state != trigger.to_state.state }}
+         trigger.to_state.state | float(0) > trigger.from_state.state | float(0) and
+         (trigger.to_state.state | float(0) - trigger.from_state.state | float(0)) > 0.5 }}
 actions:
   - variables:
-      poids_distribue: "{{ trigger.to_state.state | float(0) }}"
+      poids_distribue: "{{ (trigger.to_state.state | float(0) - trigger.from_state.state | float(0)) | round(1) }}"
       stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') | float(0) }}"
       nouveau_stock: "{{ [stock_actuel - poids_distribue, 0] | max | round(1) }}"
       cumul_actuel: >-
@@ -150,11 +152,11 @@ actions:
   - action: system_log.write
     data:
       message: >
-        Pet Feeder: {{ poids_distribue }}g distribués.  Stock: {{ stock_actuel
-        }}g → {{ nouveau_stock }}g |  Cumul depuis refill: {{ cumul_actuel }}g →
-        {{ nouveau_cumul }}g |  Quotidien: {{ compteur_quotidien_actuel }}g → {{
-        nouveau_compteur_quotidien }}g |  Total: {{ total_cumulatif_actuel }}g →
-        {{ nouveau_total_cumulatif }}g
+        Pet Feeder: {{ poids_distribue }}g distribués ({{ trigger.from_state.state }}g → {{ trigger.to_state.state }}g).  
+        Stock: {{ stock_actuel }}g → {{ nouveau_stock }}g |  
+        Cumul depuis refill: {{ cumul_actuel }}g → {{ nouveau_cumul }}g |  
+        Quotidien: {{ compteur_quotidien_actuel }}g → {{ nouveau_compteur_quotidien }}g |  
+        Total: {{ total_cumulatif_actuel }}g → {{ nouveau_total_cumulatif }}g
       level: info
 mode: single
 
