@@ -1,5 +1,7 @@
 pet_feeder_stock_was_low:
   name: "Stock était bas (technique)"
   icon: mdi:alert-circle
-pet_feeder_cumulative_distributed_since_refill:
-  name: "Refill trigger"
+pet_feeder_manual_refill_trigger:
+  name: "Déclencheur remplissage manuel"
+  icon: mdi:warehouse-plus
+  initial: false
