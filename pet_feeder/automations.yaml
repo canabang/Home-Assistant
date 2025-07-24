@@ -98,57 +98,39 @@ actions:
       level: info
 mode: single
 
-alias: Pet Feeder - Mise à jour compteurs (déclencheur direct)
-description: Met à jour tous les compteurs à chaque distribution détectée
+alias: Pet Feeder - Mise à jour compteurs unifiée
+description: >-
+  Met à jour tous les compteurs (quotidien, cumulatif, stock) lors d'une
+  distribution
 triggers:
-  # Écoute directement le capteur du distributeur
-  - entity_id: sensor.pet_feeder_feeding_size
+  - entity_id:
+      - sensor.poids_reel_distribue_aujourd_hui
     trigger: state
-  # Backup : écoute aussi last_seen pour détecter l'activité
-  - entity_id: sensor.pet_feeder_last_seen
-    trigger: state
+    from: null
+    to: null
 conditions:
   - condition: template
     value_template: |
-      {% if trigger.entity_id == 'sensor.pet_feeder_feeding_size' %}
-        {# Déclencheur principal : feeding_size a changé #}
-        {{ trigger.from_state is not none and 
-           trigger.to_state is not none and
-           trigger.to_state.state not in ['unknown', 'unavailable', '0'] and
-           trigger.to_state.state | int(0) > 0 }}
-      {% elif trigger.entity_id == 'sensor.pet_feeder_last_seen' %}
-        {# Déclencheur backup : activité détectée ET feeding_size > 0 #}
-        {{ states('sensor.pet_feeder_feeding_size') not in ['unknown', 'unavailable', '0'] and
-           states('sensor.pet_feeder_feeding_size') | int(0) > 0 and
-           trigger.from_state != trigger.to_state }}
-      {% else %}
-        false
-      {% endif %}
+      {{ trigger.from_state is not none and trigger.to_state is not none and
+         trigger.to_state.state not in ['unknown', 'unavailable'] and
+         trigger.from_state.state not in ['unknown', 'unavailable'] and
+         trigger.to_state.state | float(0) > 0 and
+         trigger.from_state.state != trigger.to_state.state }}
 actions:
   - variables:
-      # Calcul du poids distribué à partir du feeding_size actuel
-      portions_distribuees: "{{ states('sensor.pet_feeder_feeding_size') | int(0) }}"
-      poids_unitaire: "{{ states('number.pet_feeder_portion_weight') | float(3) }}"
-      poids_distribue: "{{ (portions_distribuees * poids_unitaire) | round(1) }}"
-      
-      # Variables pour les mises à jour
+      poids_distribue: "{{ trigger.to_state.state | float(0) }}"
       stock_actuel: "{{ states('input_number.pet_feeder_stock_estime') | float(0) }}"
       nouveau_stock: "{{ [stock_actuel - poids_distribue, 0] | max | round(1) }}"
-      
-      cumul_actuel: "{{ states('input_number.pet_feeder_cumulative_distributed_since_refill') | float(0) }}"
+      cumul_actuel: >-
+        {{ states('input_number.pet_feeder_cumulative_distributed_since_refill')
+        | float(0) }}
       nouveau_cumul: "{{ (cumul_actuel + poids_distribue) | round(1) }}"
-      
-      compteur_quotidien_actuel: "{{ states('input_number.pet_feeder_daily_consumption_counter') | float(0) }}"
+      compteur_quotidien_actuel: >-
+        {{ states('input_number.pet_feeder_daily_consumption_counter') |
+        float(0) }}
       nouveau_compteur_quotidien: "{{ (compteur_quotidien_actuel + poids_distribue) | round(1) }}"
-      
       total_cumulatif_actuel: "{{ states('input_number.pet_feeder_total_distributed') | float(0) }}"
       nouveau_total_cumulatif: "{{ (total_cumulatif_actuel + poids_distribue) | round(1) }}"
-
-  # Protection anti-double déclenchement
-  - condition: template
-    value_template: "{{ poids_distribue > 0 }}"
-
-  # Mise à jour de tous les compteurs
   - data:
       entity_id: input_number.pet_feeder_stock_estime
       value: "{{ nouveau_stock }}"
@@ -165,16 +147,14 @@ actions:
       entity_id: input_number.pet_feeder_total_distributed
       value: "{{ nouveau_total_cumulatif }}"
     action: input_number.set_value
-
-  # Log détaillé
   - action: system_log.write
     data:
       message: >
-        Pet Feeder: Distribution détectée via {{ trigger.entity_id }}.
-        {{ portions_distribuees }} portions ({{ poids_distribue }}g) distribuées.
-        Stock: {{ stock_actuel }}g → {{ nouveau_stock }}g | 
-        Cumul: {{ cumul_actuel }}g → {{ nouveau_cumul }}g | 
-        Quotidien: {{ compteur_quotidien_actuel }}g → {{ nouveau_compteur_quotidien }}g
+        Pet Feeder: {{ poids_distribue }}g distribués.  Stock: {{ stock_actuel
+        }}g → {{ nouveau_stock }}g |  Cumul depuis refill: {{ cumul_actuel }}g →
+        {{ nouveau_cumul }}g |  Quotidien: {{ compteur_quotidien_actuel }}g → {{
+        nouveau_compteur_quotidien }}g |  Total: {{ total_cumulatif_actuel }}g →
+        {{ nouveau_total_cumulatif }}g
       level: info
 mode: single
 
