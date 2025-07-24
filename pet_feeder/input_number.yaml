@@ -15,7 +15,6 @@ pet_feeder_max_capacity:
   unit_of_measurement: "g"
   mode: box
   icon: mdi:barrel
-  initial: 1500
 
 pet_feeder_stock_estime:
   name: Stock estimé actuel (g)
@@ -31,7 +30,6 @@ pet_feeder_target_daily_weight:
   min: 20
   max: 150
   step: 1
-  initial: 60
   unit_of_measurement: "g"
   mode: box
   icon: mdi:target
