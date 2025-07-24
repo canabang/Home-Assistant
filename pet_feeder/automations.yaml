@@ -1,0 +1,75 @@
+alias: Pet Feeder - Détection rechargement et reset
+description: Détecte le rechargement (passage de <300g à >950g) et remet le compteur à zéro
+triggers:
+  - entity_id:
+      - input_number.pet_feeder_stock_estime
+    trigger: state
+    from: null
+    to: null
+conditions:
+  - condition: template
+    value_template: |
+      {{ trigger.from_state.state | float(0) < 300 and 
+         trigger.to_state.state | float(0) > 950 }}
+actions:
+  - target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_boolean.pet_feeder_stock_was_low
+    action: input_boolean.turn_off
+    data: {}
+  - target:
+      entity_id: input_number.pet_feeder_cumulative_distributed_since_refill
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.pet_feeder_refill_date
+    data:
+      value: "{{ now().timestamp() }}"
+    action: input_number.set_value
+  - action: system_log.write
+    data:
+      message: >
+        Pet Feeder: RECHARGEMENT DÉTECTÉ! Reset compteurs.  Stock: {{
+        trigger.from_state.state }}g → {{ trigger.to_state.state }}g.  Nouveau
+        cycle de suivi démarré.
+      level: info
+
+
+alias: Pet Feeder - Initialisation manuelle remplissage
+description: Permet d'initialiser manuellement un nouveau cycle de suivi
+triggers:
+  - entity_id: input_boolean.pet_feeder_manual_refill_trigger
+    trigger: state
+    to: "on"
+actions:
+  - target:
+      entity_id: input_number.pet_feeder_cumulative_distributed_since_refill
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.pet_feeder_refill_date
+    data:
+      value: "{{ now().timestamp() }}"
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.pet_feeder_daily_consumption_counter
+    data:
+      value: 0
+    action: input_number.set_value
+  - target:
+      entity_id: input_boolean.pet_feeder_manual_refill_trigger
+    action: input_boolean.turn_off
+    data: {}
+  - action: system_log.write
+    data:
+      message: "Pet Feeder: Initialisation manuelle d'un nouveau cycle de suivi"
+      level: info
+mode: single
+
+
